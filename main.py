@@ -342,7 +342,9 @@ async def callbacks(
             await msg.delete()
 
         except Exception as e:
-            print(repr(e))
+             await query.message.reply_text(
+                    repr(e)
+                )
 
            
 
