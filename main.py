@@ -343,7 +343,6 @@ async def callbacks(
 
         except Exception:
 
-            os.remove(file_path)
             await query.message.reply_text(
                 "❌ دانلود ناموفق بود.\n\n(این خطا ممکن است به‌دلیل سرعت اینترنت باشد، چند دقیقه صبر کنید اگر فایل ارسال نشد مجدد تلاش کنید.)"
             )
