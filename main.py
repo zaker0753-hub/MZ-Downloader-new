@@ -133,13 +133,13 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
      elif text == "❤️ حمایت":
          await update.message.reply_text(
-             "💖 حمایت از ما\n\nاگر این ربات برات مفید بود، اون رو به دوستانت معرفی کن.\n\nممنون از حمایتت 🌹",
+             "💖 حمایت از ما\n\nاگر این ربات برات مفید بود، اون رو به دوستانت معرفی کن.\n\nممنون از حمایتت 🌹\n\nاکر دوست داشتی می‌تونی از لینک زیر ما رو دونیت کنی:\nhttps://daramet.com/MZTDL",
              reply_markup=back_menu()
          )
 
      elif text == "🛠️ پشتیبانی":
          await update.message.reply_text(
-             "📞 پشتیبانی\n\nاگر نیاز به کمک داری، می‌تونی از طریق این آیدی ما تماس بگیری.\n\nما همیشه برای کمک به تو آماده‌ایم! 🙌\n@MZTDL_Support",
+             "📞 پشتیبانی\n\nاگر نیاز به کمک داری، می‌تونی از طریق این آیدی ما تماس بگیری.\n\nما همیشه برای کمک به تو آماده‌ایم! 🙌\n@MZBOTS_Support",
              reply_markup=back_menu()
          )
 
