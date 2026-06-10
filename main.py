@@ -335,7 +335,7 @@ async def callbacks(
             with open(file_path, "rb") as audio:
 
                 await query.message.reply_audio(
-                    document=audio
+                    audio=audio
                 )
             os.remove(file_path)
 
