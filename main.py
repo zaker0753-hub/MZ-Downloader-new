@@ -47,19 +47,6 @@ from services.soundcloud import (
     get_soundcloud_info,
     download_soundcloud
 )
-import subprocess
-
-try:
-    result = subprocess.run(
-        ["ffmpeg", "-version"],
-        capture_output=True,
-        text=True
-    )
-
-    print(result.stdout)
-
-except Exception as e:
-    print("FFMPEG ERROR:", e)
 
 broadcast_mode = set()
 
