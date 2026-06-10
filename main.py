@@ -26,7 +26,9 @@ from services.youtube import (
     get_video_info,
     is_shorts,
     download_mp3,
-    download_video
+    download_video,
+    get_audio_duration,
+    split_mp3
 )
 from database.db import (
     create_tables,
@@ -332,21 +334,51 @@ async def callbacks(
                 user_id
             )
 
-            with open(file_path, "rb") as audio:
-
-                await query.message.reply_audio(
-                    audio=audio
+            duration = get_audio_duration(file_path)
+            
+            if duration <= 1800:
+            
+                with open(
+                    file_path,
+                    "rb"
+                ) as audio:
+            
+                    await query.message.reply_audio(
+                        audio=audio
+                    )
+            
+            else:
+            
+                await query.message.reply_text(
+                    "📦 فایل طولانی است، در حال تقسیم..."
                 )
-            os.remove(file_path)
+            
+                parts = split_mp3(
+                    file_path,
+                    1200
+                )
+            
+                for index, part in enumerate(parts, start=1):
+            
+                    with open(
+                        part,
+                        "rb"
+                    ) as audio:
+            
+                        await query.message.reply_audio(
+                            audio=audio,
+                            caption=f"Part {index}"
+                        )
+            
+                    os.remove(part)
 
             await msg.delete()
 
         except Exception as e:
-             await query.message.reply_text(
-                    repr(e)
+            await msg.delete()
+            await query.message.reply_text(
+                    "❌ دانلود ناموفق بود.\n\n(این خطا ممکن است به‌دلیل سرعت اینترنت باشد، چند دقیقه صبر کنید اگر فایل ارسال نشد مجدد تلاش کنید.)"
                 )
-
-           
 
         finally:
 
