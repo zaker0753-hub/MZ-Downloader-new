@@ -49,7 +49,7 @@ def download_mp3(url, user_id):
             {
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": "mp3",
-                "preferredquality": "192",
+                "preferredquality": "128",
             }
         ]
     }
