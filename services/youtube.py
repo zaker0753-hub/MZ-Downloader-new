@@ -1,6 +1,8 @@
 from yt_dlp import YoutubeDL
 import os
 import uuid
+from mutagen.mp3 import MP3
+import subprocess
 
 
 def get_video_info(url):
@@ -58,6 +60,71 @@ def download_mp3(url, user_id):
         ydl.download([url])
 
     return f"{output_path}.mp3"
+
+
+
+def get_audio_duration(file_path):
+
+    audio = MP3(file_path)
+
+    return int(audio.info.length)
+
+
+def split_mp3(file_path, segment_time=1200):
+
+    output_pattern = (
+        file_path.replace(
+            ".mp3",
+            "_part_%03d.mp3"
+        )
+    )
+
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-i",
+            file_path,
+            "-f",
+            "segment",
+            "-segment_time",
+            str(segment_time),
+            "-c",
+            "copy",
+            output_pattern
+        ],
+        check=True
+    )
+
+    parts = []
+
+    folder = os.path.dirname(file_path)
+
+    base = os.path.basename(
+        file_path
+    ).replace(
+        ".mp3",
+        "_part_"
+    )
+
+    for file in sorted(
+        os.listdir(folder)
+    ):
+
+        if (
+            file.startswith(base)
+            and file.endswith(".mp3")
+        ):
+
+            parts.append(
+                os.path.join(
+                    folder,
+                    file
+                )
+            )
+
+    return parts
+
+
 
 
 def download_video(url, user_id, quality):
