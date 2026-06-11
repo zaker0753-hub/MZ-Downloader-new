@@ -362,7 +362,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     with open(part, "rb") as video:
 
                         await query.message.reply_video(
-                            video=video, supports_streaming=True, caption=f"Part {index}"
+                            video=video, caption=f"Part {index}"
                         )
 
                 finally:
