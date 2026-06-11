@@ -492,13 +492,18 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             async with download_semaphore:
 
-                file_path = await asyncio.to_thread(download_instagram, url, user_id)
-
-            with open(file_path, "rb") as video:
-
+                file_path = await asyncio.to_thread(
+                    download_instagram,
+                    url,
+                    user_id,
+                )
+                
+                fixed_file = file_path.replace(".mp4", "_fixed.mp4")
+                
                 subprocess.run(
                     [
                         "ffmpeg",
+                        "-y",
                         "-i",
                         file_path,
                         "-c",
@@ -506,9 +511,17 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         "-movflags",
                         "+faststart",
                         fixed_file,
-                    ]
-                ) 
-                await query.message.reply_video(video=fixed_file, supports_streaming=True)
+                    ],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                
+                with open(fixed_file, "rb") as video:
+                
+                    await query.message.reply_video(
+                        video=video,
+                        supports_streaming=True,
+                    )
 
             await msg.delete()
 
