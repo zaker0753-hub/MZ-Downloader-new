@@ -1,31 +1,28 @@
-from yt_dlp import YoutubeDL
+import math
 import os
-import uuid
-from mutagen.mp3 import MP3
 import subprocess
+import uuid
+
+import ffmpeg
+from mutagen.mp3 import MP3
+from yt_dlp import YoutubeDL
 
 
 def get_video_info(url):
 
-    ydl_opts = {
-        "quiet": True,
-        "noplaylist": True,
-        "cookiefile": "cookies.txt"
-    }
+    ydl_opts = {"quiet": True, "noplaylist": True, "cookiefile": "cookies.txt"}
 
     with YoutubeDL(ydl_opts) as ydl:
 
-        info = ydl.extract_info(
-            url,
-            download=False
-        )
+        info = ydl.extract_info(url, download=False)
 
     return {
         "title": info.get("title"),
         "thumbnail": info.get("thumbnail"),
         "duration": info.get("duration"),
-        "id": info.get("id")
+        "id": info.get("id"),
     }
+
 
 def is_shorts(url: str):
 
@@ -38,9 +35,7 @@ def download_mp3(url, user_id):
 
     unique_id = str(uuid.uuid4())
 
-    output_path = (
-        f"downloads/{user_id}_{unique_id}"
-    )
+    output_path = f"downloads/{user_id}_{unique_id}"
 
     ydl_opts = {
         "cookiefile": "cookies.txt",
@@ -53,14 +48,13 @@ def download_mp3(url, user_id):
                 "preferredcodec": "mp3",
                 "preferredquality": "128",
             }
-        ]
+        ],
     }
 
     with YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
 
     return f"{output_path}.mp3"
-
 
 
 def get_audio_duration(file_path):
@@ -72,12 +66,7 @@ def get_audio_duration(file_path):
 
 def split_mp3(file_path, segment_time=1200):
 
-    output_pattern = (
-        file_path.replace(
-            ".mp3",
-            "_part_%03d.mp3"
-        )
-    )
+    output_pattern = file_path.replace(".mp3", "_part_%03d.mp3")
 
     subprocess.run(
         [
@@ -90,41 +79,24 @@ def split_mp3(file_path, segment_time=1200):
             str(segment_time),
             "-c",
             "copy",
-            output_pattern
+            output_pattern,
         ],
-        check=True
+        check=True,
     )
 
     parts = []
 
     folder = os.path.dirname(file_path)
 
-    base = os.path.basename(
-        file_path
-    ).replace(
-        ".mp3",
-        "_part_"
-    )
+    base = os.path.basename(file_path).replace(".mp3", "_part_")
 
-    for file in sorted(
-        os.listdir(folder)
-    ):
+    for file in sorted(os.listdir(folder)):
 
-        if (
-            file.startswith(base)
-            and file.endswith(".mp3")
-        ):
+        if file.startswith(base) and file.endswith(".mp3"):
 
-            parts.append(
-                os.path.join(
-                    folder,
-                    file
-                )
-            )
+            parts.append(os.path.join(folder, file))
 
     return parts
-
-
 
 
 def download_video(url, user_id, quality):
@@ -133,15 +105,13 @@ def download_video(url, user_id, quality):
 
     unique_id = str(uuid.uuid4())
 
-    output_template = (
-        f"downloads/{user_id}_{unique_id}.%(ext)s"
-    )
+    output_template = f"downloads/{user_id}_{unique_id}.%(ext)s"
 
     ydl_opts = {
         "cookiefile": "cookies.txt",
         "outtmpl": output_template,
         "quiet": True,
-        "merge_output_format": "mp4"
+        "merge_output_format": "mp4",
     }
 
     if quality == "360":
@@ -164,3 +134,57 @@ def download_video(url, user_id, quality):
 
     return os.path.splitext(filename)[0] + ".mp4"
 
+
+def get_video_duration(file_path):
+
+    probe = ffmpeg.probe(file_path)
+
+    return float(probe["format"]["duration"])
+
+
+def split_video_by_size(input_file, max_size_mb=30):
+
+    file_size = os.path.getsize(input_file)
+
+    max_size = max_size_mb * 1024 * 1024
+
+    if file_size <= max_size:
+        return [input_file]
+
+    duration = get_video_duration(input_file)
+
+    parts_count = math.ceil(file_size / max_size)
+
+    part_duration = math.ceil(duration / parts_count)
+
+    output_files = []
+
+    base_name = os.path.splitext(input_file)[0]
+
+    for i in range(parts_count):
+
+        output_file = f"{base_name}_part{i+1}.mp4"
+
+        start_time = i * part_duration
+
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-i",
+                input_file,
+                "-ss",
+                str(start_time),
+                "-t",
+                str(part_duration),
+                "-c",
+                "copy",
+                output_file,
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
+        output_files.append(output_file)
+
+    return output_files
