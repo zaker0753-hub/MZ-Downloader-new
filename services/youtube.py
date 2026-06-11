@@ -3,7 +3,7 @@ import os
 import subprocess
 import uuid
 
-import ffmpeg
+import json
 from mutagen.mp3 import MP3
 from yt_dlp import YoutubeDL
 
@@ -59,9 +59,23 @@ def download_mp3(url, user_id):
 
 def get_audio_duration(file_path):
 
-    audio = MP3(file_path)
+    result = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "quiet",
+            "-print_format",
+            "json",
+            "-show_format",
+            file_path,
+        ],
+        capture_output=True,
+        text=True,
+    )
 
-    return int(audio.info.length)
+    data = json.loads(result.stdout)
+
+    return float(data["format"]["duration"])
 
 
 def split_mp3(file_path, segment_time=1200):
