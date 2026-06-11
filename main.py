@@ -495,7 +495,19 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             with open(file_path, "rb") as video:
 
-                await query.message.reply_video(video=video, supports_streaming=True)
+                subprocess.run(
+                    [
+                        "ffmpeg",
+                        "-i",
+                        file_path,
+                        "-c",
+                        "copy",
+                        "-movflags",
+                        "+faststart",
+                        fixed_file,
+                    ]
+                ) 
+                await query.message.reply_video(video=fixed_file, supports_streaming=True)
 
             await msg.delete()
 
