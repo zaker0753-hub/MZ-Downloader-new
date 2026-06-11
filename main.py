@@ -495,7 +495,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             with open(file_path, "rb") as video:
 
-                await query.message.reply_video(video=video)
+                await query.message.reply_video(video=video, supports_streaming=True)
 
             await msg.delete()
 
