@@ -284,7 +284,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 with open(file_path, "rb") as audio:
 
-                    await query.message.reply_audio(audio=audio, supports_streaming=True)
+                    await query.message.reply_audio(audio=audio)
 
             else:
 
@@ -299,7 +299,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         with open(part, "rb") as audio:
 
                             await query.message.reply_audio(
-                                audio=audio, supports_streaming=True, caption=f"Part {index}"
+                                audio=audio, caption=f"Part {index}"
                             )
 
                     finally:
@@ -362,7 +362,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     with open(part, "rb") as video:
 
                         await query.message.reply_video(
-                            video=video, caption=f"Part {index}"
+                            video=video, supports_streaming=True, caption=f"Part {index}"
                         )
 
                 finally:
@@ -378,7 +378,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
             
 
             await query.message.reply_text(
-                str(e)
+                "❌ دانلود ناموفق بود.\n\n(این خطا ممکن است به‌دلیل سرعت اینترنت باشد، چند دقیقه صبر کنید اگر فایل ارسال نشد مجدد تلاش کنید.)"
             )
 
         finally:
@@ -418,7 +418,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 with open(file_path, "rb") as audio:
 
-                    await query.message.reply_audio(audio=audio, supports_streaming=True)
+                    await query.message.reply_audio(audio=audio)
 
                 await msg.delete()
 
@@ -562,7 +562,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             with open(file_path, "rb") as audio:
 
-                await query.message.reply_audio(audio=audio, supports_streaming=True)
+                await query.message.reply_audio(audio=audio)
 
             await msg.delete()
 
