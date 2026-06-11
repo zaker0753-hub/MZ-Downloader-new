@@ -59,23 +59,9 @@ def download_mp3(url, user_id):
 
 def get_audio_duration(file_path):
 
-    result = subprocess.run(
-        [
-            "ffprobe",
-            "-v",
-            "quiet",
-            "-print_format",
-            "json",
-            "-show_format",
-            file_path,
-        ],
-        capture_output=True,
-        text=True,
-    )
+    audio = MP3(file_path)
 
-    data = json.loads(result.stdout)
-
-    return float(data["format"]["duration"])
+    return int(audio.info.length)
 
 
 def split_mp3(file_path, segment_time=1200):
@@ -151,9 +137,23 @@ def download_video(url, user_id, quality):
 
 def get_video_duration(file_path):
 
-    probe = ffmpeg.probe(file_path)
+    result = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "quiet",
+            "-print_format",
+            "json",
+            "-show_format",
+            file_path,
+        ],
+        capture_output=True,
+        text=True,
+    )
 
-    return float(probe["format"]["duration"])
+    data = json.loads(result.stdout)
+
+    return float(data["format"]["duration"])
 
 
 def split_video_by_size(input_file, max_size_mb=30):
