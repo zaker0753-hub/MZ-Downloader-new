@@ -378,7 +378,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
             
 
             await query.message.reply_text(
-                e
+                str(e)
             )
 
         finally:
