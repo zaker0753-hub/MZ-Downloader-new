@@ -1,6 +1,5 @@
 import asyncio
 import os
-import subprocess
 
 from telegram import Update
 from telegram.ext import (
@@ -285,7 +284,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 with open(file_path, "rb") as audio:
 
-                    await query.message.reply_audio(audio=audio)
+                    await query.message.reply_audio(audio=audio, supports_streaming=True)
 
             else:
 
@@ -300,7 +299,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         with open(part, "rb") as audio:
 
                             await query.message.reply_audio(
-                                audio=audio, caption=f"Part {index}"
+                                audio=audio, supports_streaming=True, caption=f"Part {index}"
                             )
 
                     finally:
@@ -363,7 +362,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     with open(part, "rb") as video:
 
                         await query.message.reply_video(
-                            video=video, caption=f"Part {index}"
+                            video=video, supports_streaming=True, caption=f"Part {index}"
                         )
 
                 finally:
@@ -419,7 +418,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 with open(file_path, "rb") as audio:
 
-                    await query.message.reply_audio(audio=audio)
+                    await query.message.reply_audio(audio=audio, supports_streaming=True)
 
                 await msg.delete()
 
@@ -454,7 +453,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 with open(file_path, "rb") as video:
 
-                    await query.message.reply_video(video=video)
+                    await query.message.reply_video(video=video, supports_streaming=True)
 
                 await msg.delete()
 
@@ -492,36 +491,11 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             async with download_semaphore:
 
-                file_path = await asyncio.to_thread(
-                    download_instagram,
-                    url,
-                    user_id,
-                )
-                
-                fixed_file = file_path.replace(".mp4", "_fixed.mp4")
-                
-                subprocess.run(
-                    [
-                        "ffmpeg",
-                        "-y",
-                        "-i",
-                        file_path,
-                        "-c",
-                        "copy",
-                        "-movflags",
-                        "+faststart",
-                        fixed_file,
-                    ],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
-                
-                with open(fixed_file, "rb") as video:
-                
-                    await query.message.reply_video(
-                        video=video,
-                        supports_streaming=True,
-                    )
+                file_path = await asyncio.to_thread(download_instagram, url, user_id)
+
+            with open(file_path, "rb") as video:
+
+                await query.message.reply_video(video=video, supports_streaming=True)
 
             await msg.delete()
 
@@ -555,7 +529,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             with open(file_path, "rb") as video:
 
-                await query.message.reply_video(video=video)
+                await query.message.reply_video(video=video, supports_streaming=True)
 
             await msg.delete()
 
@@ -588,7 +562,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             with open(file_path, "rb") as audio:
 
-                await query.message.reply_audio(audio=audio)
+                await query.message.reply_audio(audio=audio, supports_streaming=True)
 
             await msg.delete()
 
