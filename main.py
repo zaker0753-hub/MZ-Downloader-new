@@ -199,15 +199,13 @@ async def handle_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ دانلود این محتوا امکان‌پذیر نیست.")
 
     elif platform == "instagram":
-
-        elif platform == "instagram":
-
-            save_url(update.effective_user.id, text)
         
-            await update.message.reply_text(
-                "پست اینستاگرام پیدا شد",
-                reply_markup=instagram_keyboard(),
-            )
+        save_url(update.effective_user.id, text)
+    
+        await update.message.reply_text(
+            "پست اینستاگرام پیدا شد",
+            reply_markup=instagram_keyboard(),
+        )
 
     elif platform == "tiktok":
 
