@@ -1,49 +1,62 @@
 import os
 import uuid
-
-from yt_dlp import YoutubeDL
+import instaloader
 
 
 def get_instagram_info(url):
 
-    ydl_opts = {"quiet": True}
-
-    with YoutubeDL(ydl_opts) as ydl:
-
-        info = ydl.extract_info(
-            url,
-            download=False,
-        )
-
-        return {
-            "title": info.get("title", "Instagram"),
-            "thumbnail": info.get("thumbnail"),
-        }
+    return {
+        "title": "Instagram Post",
+        "thumbnail": None,
+    }
 
 
 def download_instagram(url, user_id):
 
     os.makedirs("downloads", exist_ok=True)
 
-    unique_id = str(uuid.uuid4())
+    shortcode = url.rstrip("/").split("/")[-1]
 
-    output = f"downloads/{user_id}_{unique_id}.%(ext)s"
+    L = instaloader.Instaloader(
+        download_videos=True,
+        download_video_thumbnails=False,
+        download_geotags=False,
+        download_comments=False,
+        save_metadata=False,
+        compress_json=False,
+        dirname_pattern="downloads",
+        filename_pattern=f"{user_id}_{uuid.uuid4()}",
+    )
+
+    post = instaloader.Post.from_shortcode(
+        L.context,
+        shortcode,
+    )
 
     before = set(os.listdir("downloads"))
 
-    ydl_opts = {
-        "outtmpl": output,
-        "quiet": True,
-    }
-
-    with YoutubeDL(ydl_opts) as ydl:
-        ydl.extract_info(url, download=True)
+    L.download_post(post, target="")
 
     after = set(os.listdir("downloads"))
 
-    new_files = after - before
+    files = []
 
-    print("NEW FILES:", new_files)
-    print("ALL FILES:", after)
-    
-    return [os.path.join("downloads", file) for file in new_files]
+    for file in after - before:
+
+        if file.endswith(
+            (
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".mp4",
+                ".webp",
+            )
+        ):
+            files.append(
+                os.path.join(
+                    "downloads",
+                    file,
+                )
+            )
+
+    return files
