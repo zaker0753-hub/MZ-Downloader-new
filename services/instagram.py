@@ -10,8 +10,13 @@ def get_instagram_info(url):
 
     with YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
-        return {"title": info.get("title"), "thumbnail": info.get("thumbnail")}
 
+        print(info)
+
+        return {
+            "title": info.get("title"),
+            "thumbnail": info.get("thumbnail"),
+        }
 
 def download_instagram(url, user_id):
 
