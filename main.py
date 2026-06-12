@@ -200,24 +200,21 @@ async def handle_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif platform == "instagram":
 
-        save_url(update.effective_user.id, text)
-
-        info = get_instagram_info(text)
-
         if info.get("thumbnail"):
-        
+
             await update.message.reply_photo(
                 photo=info["thumbnail"],
                 caption=info["title"],
                 reply_markup=instagram_keyboard(),
             )
-        
+
         else:
-        
+
             await update.message.reply_text(
                 info["title"],
                 reply_markup=instagram_keyboard(),
             )
+
     elif platform == "tiktok":
 
         save_url(update.effective_user.id, text)
@@ -501,25 +498,32 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             async with download_semaphore:
 
-                files = await asyncio.to_thread(
-                    download_instagram,
-                    url,
-                    user_id,
-                )
+                files = await asyncio.to_thread(download_instagram, url, user_id)
 
                 for file_path in files:
+
                     ext = os.path.splitext(file_path)[1].lower()
 
-                    if ext in [".jpg", ".jpeg", ".png", ".webp"]:
-                        with open(file_path, "rb") as photo:
-                            await query.message.reply_photo(photo=photo)
+                    try:
 
-                    else:
-                        with open(file_path, "rb") as video:
-                            await query.message.reply_video(
-                                video=video,
-                                supports_streaming=True,
-                            )
+                        if ext in [".jpg", ".jpeg", ".png", ".webp"]:
+
+                            with open(file_path, "rb") as photo:
+
+                                await query.message.reply_photo(photo=photo)
+
+                        else:
+
+                            with open(file_path, "rb") as video:
+
+                                await query.message.reply_video(
+                                    video=video, supports_streaming=True
+                                )
+
+                    finally:
+
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
 
             await msg.delete()
 
