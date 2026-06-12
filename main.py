@@ -200,6 +200,10 @@ async def handle_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif platform == "instagram":
 
+        save_url(update.effective_user.id, text)
+
+        info = get_instagram_info(text)
+
         if info.get("thumbnail"):
 
             await update.message.reply_photo(
@@ -493,6 +497,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
         msg = await query.message.reply_text("⏳ در حال دانلود...")
 
         file_path = None
+        files = []
 
         try:
 
@@ -534,10 +539,6 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.reply_text(str(e))
 
         finally:
-
-            if file_path in files:
-                if os.path.exists(file_path):
-                    os.remove(file_path)
             active_download.discard(user_id)
 
     elif data == "tiktok_download":
