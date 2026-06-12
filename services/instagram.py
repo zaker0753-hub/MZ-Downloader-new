@@ -14,7 +14,6 @@ def get_instagram_info(url):
 
         return {
             "title": info.get("title", "Instagram"),
-            "thumbnail": info.get("thumbnail"),
         }
 
 
