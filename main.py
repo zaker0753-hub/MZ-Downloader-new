@@ -504,11 +504,9 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
             async with download_semaphore:
 
                 files = await asyncio.to_thread(download_instagram, url, user_id)
-                print("FILES:", files)
-                
+
                 for file_path in files:
-                    print("SENDING:", file_path)
-                    print("EXISTS:", os.path.exists(file_path))
+
                     ext = os.path.splitext(file_path)[1].lower()
 
                     try:
@@ -517,14 +515,17 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                             with open(file_path, "rb") as photo:
 
-                                await query.message.reply_photo(photo=photo)
+                                await query.message.reply_photo(
+                                    photo=photo
+                                )
 
-                        else:
+                        elif ext == ".mp4":
 
                             with open(file_path, "rb") as video:
 
                                 await query.message.reply_video(
-                                    video=video, supports_streaming=True
+                                    video=video,
+                                    supports_streaming=True,
                                 )
 
                     finally:
@@ -538,7 +539,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             print(e)
 
-            await query.message.reply_text(str(e))
+            await query.message.reply_text("❌ دانلود ناموفق بود.\n\n(این خطا ممکن است به‌دلیل سرعت اینترنت باشد، چند دقیقه صبر کنید اگر فایل ارسال نشد مجدد تلاش کنید.)")
 
         finally:
             active_download.discard(user_id)
