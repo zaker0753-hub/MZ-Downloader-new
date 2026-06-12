@@ -43,4 +43,7 @@ def download_instagram(url, user_id):
 
     new_files = after - before
 
+    print("NEW FILES:", new_files)
+    print("ALL FILES:", after)
+    
     return [os.path.join("downloads", file) for file in new_files]
