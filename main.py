@@ -204,20 +204,11 @@ async def handle_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         info = get_instagram_info(text)
 
-        if info.get("thumbnail"):
-
-            await update.message.reply_photo(
-                photo=info["thumbnail"],
-                caption=info["title"],
-                reply_markup=instagram_keyboard(),
-            )
-
-        else:
-
-            await update.message.reply_text(
-                info["title"],
-                reply_markup=instagram_keyboard(),
-            )
+        await update.message.reply_photo(
+            photo=info["thumbnail"],
+            caption=info["title"],
+            reply_markup=instagram_keyboard(),
+        )
 
     elif platform == "tiktok":
 
@@ -497,41 +488,16 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
         msg = await query.message.reply_text("⏳ در حال دانلود...")
 
         file_path = None
-        files = []
 
         try:
 
             async with download_semaphore:
 
-                files = await asyncio.to_thread(download_instagram, url, user_id)
+                file_path = await asyncio.to_thread(download_instagram, url, user_id)
 
-                for file_path in files:
+            with open(file_path, "rb") as video:
 
-                    ext = os.path.splitext(file_path)[1].lower()
-
-                    try:
-
-                        if ext in [".jpg", ".jpeg", ".png", ".webp"]:
-
-                            with open(file_path, "rb") as photo:
-
-                                await query.message.reply_photo(
-                                    photo=photo
-                                )
-
-                        elif ext == ".mp4":
-
-                            with open(file_path, "rb") as video:
-
-                                await query.message.reply_video(
-                                    video=video,
-                                    supports_streaming=True,
-                                )
-
-                    finally:
-
-                        if os.path.exists(file_path):
-                            os.remove(file_path)
+                await query.message.reply_video(video=video, supports_streaming=True)
 
             await msg.delete()
 
@@ -539,9 +505,14 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             print(e)
 
-            await query.message.reply_text("❌ دانلود ناموفق بود.\n\n(این خطا ممکن است به‌دلیل سرعت اینترنت باشد، چند دقیقه صبر کنید اگر فایل ارسال نشد مجدد تلاش کنید.)")
+            await query.message.reply_text(
+                "❌ دانلود ناموفق بود.\n\n(این خطا ممکن است به‌دلیل سرعت اینترنت باشد، چند دقیقه صبر کنید اگر فایل ارسال نشد مجدد تلاش کنید.)"
+            )
 
         finally:
+
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
             active_download.discard(user_id)
 
     elif data == "tiktok_download":
