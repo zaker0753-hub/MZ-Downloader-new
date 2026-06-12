@@ -1,6 +1,5 @@
 import asyncio
 import os
-import time
 
 from telegram import Update
 from telegram.ext import (
@@ -50,68 +49,6 @@ from utils.force_join import is_joined
 
 broadcast_mode = set()
 download_semaphore = asyncio.Semaphore(3)
-download_queue = asyncio.Queue()
-average_download_times = []
-
-
-def get_average_download_time():
-
-    if not average_download_times:
-        return 120
-
-    return int(sum(average_download_times) / len(average_download_times))
-
-
-def estimate_wait_time(position):
-    avg = get_average_download_time()
-
-    batches = (position - 1) // 3
-
-    return batches * avg
-
-
-async def queue_status_loop(
-    user_id,
-    status_message,
-):
-
-    while True:
-        try:
-            position = None
-
-            queue_items = list(download_queue._queue)
-
-            for index, item in enumerate(queue_items):
-                if item["user_id"] == user_id:
-                    position = index + 1
-                    break
-                if position is None:
-                    return
-                wait_time = estimate_wait_time(position)
-
-                await status_message.edit_text(
-                    f"⏳ در صف دانلود\n\n"
-                    f"📍 جایگاه شما: {position}\n"
-                    f"🕒 زمان تقریبی انتظار: {wait_time // 60} دقیقه"
-                )
-
-                await asyncio.sleep(5)
-        except:
-            return
-
-
-async def download_worker(worker_id):
-    while True:
-        job = await download_queue.get()
-
-        try:
-            await job["task"]()
-
-        except Exception as e:
-            print(f"Worker {worker_id}: {e}")
-
-        finally:
-            download_queue.task_done()
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -330,76 +267,10 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await query.message.reply_text("❌ این دکمه منقضی شده است.")
             return
-        status_msg = await query.message.reply_text("⏳ در حال ورود به صف...")
+        active_download.add(user_id)
+        msg = await query.message.reply_text("⏳ در حال دانلود...")
 
         file_path = None
-
-        async def process_youtube_mp3():
-
-            start_time = time.time()
-
-            file_path = None
-
-            try:
-
-                file_path = await asyncio.to_thread(
-                    download_mp3,
-                    url,
-                    user_id,
-                )
-
-                duration = get_audio_duration(file_path)
-
-                if duration <= 1800:
-
-                    with open(file_path, "rb") as audio:
-
-                        await query.message.reply_audio(audio=audio)
-
-                else:
-
-                    parts = split_mp3(file_path, 1200)
-
-                    for index, part in enumerate(parts, start=1):
-
-                        with open(part, "rb") as audio:
-
-                            await query.message.reply_audio(
-                                audio=audio,
-                                caption=f"Part {index}",
-                            )
-
-            finally:
-
-                if file_path and os.path.exists(file_path):
-
-                    os.remove(file_path)
-
-                elapsed = time.time() - start_time
-
-                average_download_times.append(elapsed)
-
-                if len(average_download_times) > 20:
-
-                    average_download_times.pop(0)
-
-                active_download.discard(user_id)
-
-        job = {
-            "user_id": user_id,
-            "task": process_youtube_mp3,
-        }
-
-        await download_queue.put(job)
-
-        asyncio.create_task(
-            queue_status_loop(
-                user_id,
-                status_msg,
-            )
-        )
-
-        await query.message.reply_text("✅ درخواست دانلود ثبت شد.")
 
         try:
 
@@ -491,9 +362,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     with open(part, "rb") as video:
 
                         await query.message.reply_video(
-                            video=video,
-                            supports_streaming=True,
-                            caption=f"Part {index}",
+                            video=video, supports_streaming=True, caption=f"Part {index}"
                         )
 
                 finally:
@@ -505,6 +374,8 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await msg.delete()
 
         except Exception as e:
+
+            
 
             await query.message.reply_text(
                 "❌ دانلود ناموفق بود.\n\n(این خطا ممکن است به‌دلیل سرعت اینترنت باشد، چند دقیقه صبر کنید اگر فایل ارسال نشد مجدد تلاش کنید.)"
@@ -582,9 +453,7 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 with open(file_path, "rb") as video:
 
-                    await query.message.reply_video(
-                        video=video, supports_streaming=True
-                    )
+                    await query.message.reply_video(video=video, supports_streaming=True)
 
                 await msg.delete()
 
@@ -634,7 +503,9 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             print(e)
 
-            await query.message.reply_text(str(e))
+            await query.message.reply_text(
+                str(e)
+            )
 
         finally:
 
@@ -730,11 +601,6 @@ async def broadcast(update: Update, context):
     await update.message.reply_text("پیام همگانی را ارسال کن:")
 
 
-async def start_workers(app):
-    for i in range(3):
-        asyncio.create_task(download_worker(i + 1))
-
-
 def main():
     create_tables()
 
@@ -745,8 +611,6 @@ def main():
         .read_timeout(10000)
         .build()
     )
-
-    app.post_init = start_workers
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, buttons))
