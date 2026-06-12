@@ -1,62 +1,32 @@
 import os
 import uuid
-import instaloader
+
+from yt_dlp import YoutubeDL
 
 
 def get_instagram_info(url):
 
-    return {
-        "title": "Instagram Post",
-        "thumbnail": None,
-    }
+    ydl_opts = {"quiet": True}
+
+    with YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+        return {"title": info.get("title"), "thumbnail": info.get("thumbnail")}
 
 
 def download_instagram(url, user_id):
 
     os.makedirs("downloads", exist_ok=True)
 
-    shortcode = url.rstrip("/").split("/")[-1]
+    unique_id = str(uuid.uuid4())
 
-    L = instaloader.Instaloader(
-        download_videos=True,
-        download_video_thumbnails=False,
-        download_geotags=False,
-        download_comments=False,
-        save_metadata=False,
-        compress_json=False,
-        dirname_pattern="downloads",
-        filename_pattern=f"{user_id}_{uuid.uuid4()}",
-    )
+    output = f"downloads/" f"{user_id}_{unique_id}.%(ext)s"
 
-    post = instaloader.Post.from_shortcode(
-        L.context,
-        shortcode,
-    )
+    ydl_opts = {"outtmpl": output, "quiet": True, "merge_output_format": "mp4"}
 
-    before = set(os.listdir("downloads"))
+    with YoutubeDL(ydl_opts) as ydl:
 
-    L.download_post(post, target="")
+        info = ydl.extract_info(url, download=True)
 
-    after = set(os.listdir("downloads"))
+        filename = ydl.prepare_filename(info)
 
-    files = []
-
-    for file in after - before:
-
-        if file.endswith(
-            (
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".mp4",
-                ".webp",
-            )
-        ):
-            files.append(
-                os.path.join(
-                    "downloads",
-                    file,
-                )
-            )
-
-    return files
+    return filename
