@@ -504,9 +504,11 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
             async with download_semaphore:
 
                 files = await asyncio.to_thread(download_instagram, url, user_id)
-
+                print("FILES:", files)
+                
                 for file_path in files:
-
+                    print("SENDING:", file_path)
+                    print("EXISTS:", os.path.exists(file_path))
                     ext = os.path.splitext(file_path)[1].lower()
 
                     try:
