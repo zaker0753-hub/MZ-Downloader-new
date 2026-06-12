@@ -362,7 +362,9 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     with open(part, "rb") as video:
 
                         await query.message.reply_video(
-                            video=video, supports_streaming=True, caption=f"Part {index}"
+                            video=video,
+                            supports_streaming=True,
+                            caption=f"Part {index}",
                         )
 
                 finally:
@@ -374,8 +376,6 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await msg.delete()
 
         except Exception as e:
-
-            
 
             await query.message.reply_text(
                 "❌ دانلود ناموفق بود.\n\n(این خطا ممکن است به‌دلیل سرعت اینترنت باشد، چند دقیقه صبر کنید اگر فایل ارسال نشد مجدد تلاش کنید.)"
@@ -453,7 +453,9 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                 with open(file_path, "rb") as video:
 
-                    await query.message.reply_video(video=video, supports_streaming=True)
+                    await query.message.reply_video(
+                        video=video, supports_streaming=True
+                    )
 
                 await msg.delete()
 
@@ -491,11 +493,25 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             async with download_semaphore:
 
-                file_path = await asyncio.to_thread(download_instagram, url, user_id)
+                files = await asyncio.to_thread(
+                    download_instagram,
+                    url,
+                    user_id,
+                )
 
-            with open(file_path, "rb") as video:
+                for file_path in files:
+                    ext = os.path.splitext(file_path)[1].lower()
 
-                await query.message.reply_video(video=video, supports_streaming=True)
+                    if ext in [".jpg", ".jpeg", ".png", ".webp"]:
+                        with open(file_path, "rb") as photo:
+                            await query.message.reply_photo(photo=photo)
+
+                    else:
+                        with open(file_path, "rb") as video:
+                            await query.message.reply_video(
+                                video=video,
+                                supports_streaming=True,
+                            )
 
             await msg.delete()
 
@@ -503,14 +519,13 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             print(e)
 
-            await query.message.reply_text(
-                str(e)
-            )
+            await query.message.reply_text(str(e))
 
         finally:
 
-            if file_path and os.path.exists(file_path):
-                os.remove(file_path)
+            if file_path in files:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
             active_download.discard(user_id)
 
     elif data == "tiktok_download":
