@@ -29,24 +29,18 @@ def download_instagram(url, user_id):
 
     output = f"downloads/{user_id}_{unique_id}.%(ext)s"
 
+    before = set(os.listdir("downloads"))
+
     ydl_opts = {
         "outtmpl": output,
         "quiet": True,
     }
 
     with YoutubeDL(ydl_opts) as ydl:
+        ydl.extract_info(url, download=True)
 
-        info = ydl.extract_info(url, download=True)
+    after = set(os.listdir("downloads"))
 
-        download_files = []
+    new_files = after - before
 
-        if info.get("entries"):
-
-            for entry in info["entries"]:
-                download_files.append(ydl.prepare_filename(entry))
-
-        else:
-
-            download_files.append(ydl.prepare_filename(info))
-
-    return download_files
+    return [os.path.join("downloads", file) for file in new_files]
