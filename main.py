@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from telegram import Update
+from telegram import InputMediaPhoto, InputMediaVideo, Update
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -484,33 +484,82 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "❌ این دکمه مربوط به آخرین لینک اینستاگرام شما نیست."
             )
             return
-        active_download.add(user_id)
-        msg = await query.message.reply_text("⏳ در حال دانلود...")
 
-        file_path = None
+        msg = await query.message.reply_text("⏳ در حال دانلود...")
 
         try:
 
-            async with download_semaphore:
+            files = await asyncio.to_thread(download_instagram, url, user_id)
 
-                file_path = await asyncio.to_thread(download_instagram, url, user_id)
+            if not files:
 
-            with open(file_path, "rb") as video:
+                raise Exception()
 
-                await query.message.reply_video(video=video, supports_streaming=True)
+            if len(files) == 1:
+
+                file_path = files[0]
+
+                ext = os.path.splitext(file_path)[1].lower()
+
+                if ext in [".jpg", ".jpeg", ".png", ".webp"]:
+
+                    with open(file_path, "rb") as photo:
+
+                        await query.message.reply_photo(photo=photo)
+
+                else:
+
+                    with open(file_path, "rb") as video:
+
+                        await query.message.reply_video(video=video)
+
+                os.remove(file_path)
+
+            else:
+
+                media = []
+
+                opened_files = []
+
+                for file_path in files:
+
+                    ext = os.path.splitext(file_path)[1].lower()
+
+                    file_obj = open(file_path, "rb")
+
+                    opened_files.append(file_obj)
+
+                    if ext in [".jpg", ".jpeg", ".png", ".webp"]:
+
+                        media.append(InputMediaPhoto(media=file_obj))
+
+                    else:
+
+                        media.append(InputMediaVideo(media=file_obj))
+
+                await query.message.reply_media_group(media=media)
+
+                for f in opened_files:
+
+                    f.close()
+
+                for file_path in files:
+
+                    if os.path.exists(file_path):
+
+                        os.remove(file_path)
 
             await msg.delete()
 
         except Exception as e:
 
-            print(e)
+            await msg.delete()
 
             await query.message.reply_text(
                 "❌ دانلود ناموفق بود.\n\n(این خطا ممکن است به‌دلیل سرعت اینترنت باشد، چند دقیقه صبر کنید اگر فایل ارسال نشد مجدد تلاش کنید.)"
             )
 
         finally:
-
             if file_path and os.path.exists(file_path):
                 os.remove(file_path)
             active_download.discard(user_id)
