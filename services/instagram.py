@@ -9,8 +9,13 @@ def get_instagram_info(url):
     ydl_opts = {"quiet": True}
 
     with YoutubeDL(ydl_opts) as ydl:
+
         info = ydl.extract_info(url, download=False)
-        return {"title": info.get("title"), "thumbnail": info.get("thumbnail")}
+
+        return {
+            "title": info.get("title", "Instagram"),
+            "thumbnail": info.get("thumbnail"),
+        }
 
 
 def download_instagram(url, user_id):
@@ -19,14 +24,37 @@ def download_instagram(url, user_id):
 
     unique_id = str(uuid.uuid4())
 
-    output = f"downloads/" f"{user_id}_{unique_id}.%(ext)s"
+    output = f"downloads/" f"{user_id}_{unique_id}_%(playlist_index)s.%(ext)s"
 
     ydl_opts = {"outtmpl": output, "quiet": True, "merge_output_format": "mp4"}
+
+    downloaded_files = []
 
     with YoutubeDL(ydl_opts) as ydl:
 
         info = ydl.extract_info(url, download=True)
 
-        filename = ydl.prepare_filename(info)
+        if "entries" in info:
 
-    return filename
+            for entry in info["entries"]:
+
+                try:
+
+                    filename = ydl.prepare_filename(entry)
+
+                    if os.path.exists(filename):
+
+                        downloaded_files.append(filename)
+
+                except Exception:
+                    pass
+
+        else:
+
+            filename = ydl.prepare_filename(info)
+
+            if os.path.exists(filename):
+
+                downloaded_files.append(filename)
+
+    return downloaded_files
