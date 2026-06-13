@@ -1,12 +1,16 @@
 import os
 import uuid
+import subprocess
 
 from yt_dlp import YoutubeDL
 
 
 def get_instagram_info(url):
 
-    ydl_opts = {"quiet": True, "cookiefile": "cookiesins.txt"}
+    ydl_opts = {
+        "quiet": True,
+        "cookiefile": "cookiesins.txt",
+    }
 
     with YoutubeDL(ydl_opts) as ydl:
 
@@ -16,7 +20,6 @@ def get_instagram_info(url):
             "title": info.get("title", "Instagram"),
             "thumbnail": info.get("thumbnail"),
         }
-    
 
 
 def download_instagram(url, user_id):
@@ -25,37 +28,41 @@ def download_instagram(url, user_id):
 
     unique_id = str(uuid.uuid4())
 
-    output = f"downloads/" f"{user_id}_{unique_id}_%(playlist_index)s.%(ext)s"
+    folder = os.path.join(
+        "downloads",
+        f"{user_id}_{unique_id}"
+    )
 
-    ydl_opts = {"outtmpl": output, "quiet": True, "merge_output_format": "mp4", "cookiefile": "cookiesins.txt"}
+    os.makedirs(folder, exist_ok=True)
+
+    command = [
+        "gallery-dl",
+        "--cookies",
+        "cookiesins.txt",
+        "-D",
+        folder,
+        url,
+    ]
+
+    subprocess.run(
+        command,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
 
     downloaded_files = []
 
-    with YoutubeDL(ydl_opts) as ydl:
+    for root, _, files in os.walk(folder):
 
-        info = ydl.extract_info(url, download=True)
+        for file in files:
 
-        if "entries" in info:
+            full_path = os.path.join(root, file)
 
-            for entry in info["entries"]:
+            if os.path.isfile(full_path):
 
-                try:
+                downloaded_files.append(full_path)
 
-                    filename = ydl.prepare_filename(entry)
-
-                    if os.path.exists(filename):
-
-                        downloaded_files.append(filename)
-
-                except Exception:
-                    pass
-
-        else:
-
-            filename = ydl.prepare_filename(info)
-
-            if os.path.exists(filename):
-
-                downloaded_files.append(filename)
+    downloaded_files.sort()
 
     return downloaded_files
