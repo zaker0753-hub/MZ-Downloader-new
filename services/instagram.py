@@ -42,6 +42,16 @@ def download_instagram(url, user_id):
     if result.returncode != 0:
         raise Exception(result.stderr)
 
+    allowed_ext = {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp",
+        ".mp4",
+        ".mov",
+        ".mkv",
+    }
+
     downloaded_files = []
 
     for root, _, files in os.walk(folder):
@@ -50,8 +60,12 @@ def download_instagram(url, user_id):
 
             full_path = os.path.join(root, file)
 
-            if os.path.isfile(full_path):
+            ext = os.path.splitext(full_path)[1].lower()
 
+            if (
+                os.path.isfile(full_path)
+                and ext in allowed_ext
+            ):
                 downloaded_files.append(full_path)
 
     downloaded_files.sort()
