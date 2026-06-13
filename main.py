@@ -485,7 +485,12 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
 
+        active_download.add(user_id)
+        
         msg = await query.message.reply_text("⏳ در حال دانلود...")
+
+        file_path = None
+        files = []
 
         try:
 
@@ -560,8 +565,17 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
         finally:
-            if file_path and os.path.exists(file_path):
-                os.remove(file_path)
+
+            for path in files:
+
+                try:
+
+                    if os.path.exists(path):
+                        os.remove(path)
+
+                except:
+                    pass
+
             active_download.discard(user_id)
 
     elif data == "tiktok_download":
