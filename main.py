@@ -473,105 +473,144 @@ async def callbacks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == "instagram_download":
 
         url = get_url(user_id)
-
+    
+        if not url:
+    
+            await query.message.reply_text("لینکی پیدا نشد.")
+            return
+    
         if detect_platform(url) != "instagram":
-
+    
             await query.message.reply_text(
                 "❌ این دکمه مربوط به آخرین لینک اینستاگرام شما نیست."
             )
             return
-
+    
         active_download.add(user_id)
-        
+    
         msg = await query.message.reply_text("⏳ در حال دانلود...")
-
-        file_path = None
+    
         files = []
-
+    
         try:
-
-            files = await asyncio.to_thread(download_instagram, url, user_id)
-
+    
+            async with download_semaphore:
+    
+                files = await asyncio.to_thread(
+                    download_instagram,
+                    url,
+                    user_id,
+                )
+    
             if not files:
-
-                raise Exception()
-
+    
+                raise Exception("No files downloaded")
+    
             if len(files) == 1:
-
+    
                 file_path = files[0]
-
+    
                 ext = os.path.splitext(file_path)[1].lower()
-
+    
                 if ext in [".jpg", ".jpeg", ".png", ".webp"]:
-
+    
                     with open(file_path, "rb") as photo:
-
-                        await query.message.reply_photo(photo=photo)
-
+    
+                        await query.message.reply_photo(
+                            photo=photo
+                        )
+    
                 else:
-
+    
                     with open(file_path, "rb") as video:
-
-                        await query.message.reply_video(video=video)
-
-                os.remove(file_path)
-
+    
+                        await query.message.reply_video(
+                            video=video,
+                            supports_streaming=True,
+                        )
+    
             else:
-
-                media = []
-
+    
                 opened_files = []
-
-                for file_path in files:
-
-                    ext = os.path.splitext(file_path)[1].lower()
-
-                    file_obj = open(file_path, "rb")
-
-                    opened_files.append(file_obj)
-
-                    if ext in [".jpg", ".jpeg", ".png", ".webp"]:
-
-                        media.append(InputMediaPhoto(media=file_obj))
-
-                    else:
-
-                        media.append(InputMediaVideo(media=file_obj))
-
-                await query.message.reply_media_group(media=media)
-
-                for f in opened_files:
-
-                    f.close()
-
-                for file_path in files:
-
-                    if os.path.exists(file_path):
-
-                        os.remove(file_path)
-
-            await msg.delete()
-
-        except Exception as e:
-
-            await msg.delete()
-
-            await query.message.reply_text(
-                str(e)
-            )
-
-        finally:
-
-            for path in files:
-
+    
                 try:
-
+    
+                    for i in range(0, len(files), 10):
+    
+                        batch = files[i:i + 10]
+    
+                        media = []
+    
+                        for file_path in batch:
+    
+                            ext = os.path.splitext(file_path)[1].lower()
+    
+                            file_obj = open(file_path, "rb")
+    
+                            opened_files.append(file_obj)
+    
+                            if ext in [
+                                ".jpg",
+                                ".jpeg",
+                                ".png",
+                                ".webp",
+                            ]:
+    
+                                media.append(
+                                    InputMediaPhoto(
+                                        media=file_obj
+                                    )
+                                )
+    
+                            else:
+    
+                                media.append(
+                                    InputMediaVideo(
+                                        media=file_obj
+                                    )
+                                )
+    
+                        await query.message.reply_media_group(
+                            media=media
+                        )
+    
+                finally:
+    
+                    for f in opened_files:
+    
+                        try:
+                            f.close()
+                        except:
+                            pass
+    
+            await msg.delete()
+    
+        except Exception as e:
+    
+            print("Instagram Error:", e)
+    
+            try:
+                await msg.delete()
+            except:
+                pass
+    
+            await query.message.reply_text(
+                "❌ دانلود ناموفق بود."
+            )
+    
+        finally:
+    
+            for path in files:
+    
+                try:
+    
                     if os.path.exists(path):
+    
                         os.remove(path)
-
+    
                 except:
                     pass
-
+    
             active_download.discard(user_id)
 
     elif data == "tiktok_download":
