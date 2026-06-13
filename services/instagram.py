@@ -2,24 +2,13 @@ import os
 import uuid
 import subprocess
 
-from yt_dlp import YoutubeDL
-
 
 def get_instagram_info(url):
 
-    ydl_opts = {
-        "quiet": True,
-        "cookiefile": "cookiesins.txt",
+    return {
+        "title": "Instagram",
+        "thumbnail": None,
     }
-
-    with YoutubeDL(ydl_opts) as ydl:
-
-        info = ydl.extract_info(url, download=False)
-
-        return {
-            "title": info.get("title", "Instagram"),
-            "thumbnail": info.get("thumbnail"),
-        }
 
 
 def download_instagram(url, user_id):
@@ -44,12 +33,14 @@ def download_instagram(url, user_id):
         url,
     ]
 
-    subprocess.run(
+    result = subprocess.run(
         command,
-        check=True,
         capture_output=True,
         text=True,
     )
+
+    if result.returncode != 0:
+        raise Exception(result.stderr)
 
     downloaded_files = []
 
