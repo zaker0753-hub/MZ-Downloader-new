@@ -63,3 +63,4 @@ yarl==1.24.2
 yt-dlp==2026.6.9
 yt-dlp-ejs==0.8.0
 mutagen==1.47.0
+instaloader==4.15.1
