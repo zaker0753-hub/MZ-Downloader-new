@@ -201,15 +201,11 @@ async def handle_links(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif platform == "instagram":
 
         save_url(update.effective_user.id, text)
-
-        info = get_instagram_info(text)
-
-        await update.message.reply_photo(
-            photo=info["thumbnail"],
-            caption=info["title"],
+    
+        await update.message.reply_text(
+            "لینک اینستاگرام دریافت شد.",
             reply_markup=instagram_keyboard(),
         )
-
     elif platform == "tiktok":
 
         save_url(update.effective_user.id, text)
